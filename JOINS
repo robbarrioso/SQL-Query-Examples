@@ -1,0 +1,125 @@
+JOINS or table Links
+
+        SELECT customer.first_name, customer.last_name,
+          time(rental.rental_date) AS rental_time
+        FROM sakila.customer
+          INNER JOIN sakila.rental
+            ON customer.customer_id = rental.customer_id
+        WHERE date(rental.rental_date) = '2005-06-14'
+
+DEFINING TABLE ALIASES
+use entire table name or an alias
+
+        SELECT c.first_name, c.last_name,
+          time(r.rental_date) AS rental_time
+        FROM sakila.customer as c    #table alias c for customer
+          INNER JOIN sakila.rental as r   #table alias r for rental
+            ON c.customer_id = r.customer_id
+        WHERE date(r.rental_date) = '2005-06-14'
+
+Chapter 5 Querying Multiple Tables
+
+        SELECT c.first_name , c.last_name, a.address
+         FROM sakila.customer AS C INNER JOIN sakila.address AS A
+          ON c.address_id = a.address_id;
+
+how does USING work here? If the names of the columns used are identical, you can use the using subclause instead of the on
+        SELECT c.first_name , c.last_name, a.address
+        FROM sakila.customer AS C INNER JOIN sakila.address AS A
+        USING (a.address_id);
+      
+Joining Three or More tables
+        SELECT c.first_name , c.last_name, ct.city
+        FROM sakila.customer AS c 
+        INNER JOIN sakila.address AS a
+        ON c.address_id = a.address_id
+        INNER JOIN sakila.city as ct
+        ON a.city_id = ct.city_id;
+      
+Using Subqueries as tables
+        SELECT c.first_name, c.last_name, addr.address, addr.city
+        FROM sakila.customer as c
+        INNER JOIN
+             (SELECT a.address_id, a.address, ct.city
+          FROM sakila.address AS a
+                INNER JOIN sakila.city AS ct
+                ON a.city_id = ct.city_id 
+          WHERE a.district = 'California'
+              ) as addr
+              ON c.address_id = addr.address_id;
+          
+Self Joins
+          SELECT f.title, f_prnt.title prequel
+          FROM film AS f 
+          INNER JOIN film AS f_prnt
+          ON f_prnt.film_id = f.prequel_film_id
+          WHERE f.prequel_film_id IS NOT NULL;
+
+OUTER JOINS (pg 187)
+counts the number of available copies of each film by joining these two tables
+          SELECT f.film_id, f.title, count(*) num_copies
+          FROM sakila.film f
+          INNER JOIN sakila.inventory i #this join isnt really helpful but it is here to show 
+            ON f.film_id= i.film_id		  #that film table = 1000 rows while inventory table 958
+           GROUP BY f.film_id, f.title 
+       
+if i want the whole 1000 rows for the film table then i need to not use an inner join
+
+            SELECT f.film_id, f.title, count(i.inventory_id) num_copies #the count(i.inv..) will count the number of non-null values of athe inventory.inv.._id
+			      FROM sakila.film f
+		         LEFT OUTER JOIN sakila.inventory i 
+                 ON f.film_id= i.film_id		  
+	          GROUP BY f.film_id, f.title #everything is the same but the left outer join and the count(i.inventory_id) 
+			  
+THIS SHOWS the diff between inner join and outer join more clearly
+              SELECT f.film_id, f.title, i.inventory_id
+			        FROM sakila.film f
+		          INNER JOIN sakila.inventory i 
+                 ON f.film_id= i.film_id		  
+	              WHERE f.film_id BETWEEN 13 AND 15;
+              
+the same query but outer join
+              SELECT f.film_id, f.title, i.inventory_id
+			        FROM sakila.film f
+		          LEFT OUTER JOIN sakila.inventory i  # table on the left is the one responsible to determine 
+					    ON f.film_id= i.film_id			 #the number of rows, while the right table determines values when a match is found
+	            WHERE f.film_id BETWEEN 13 AND 15; #Number 14 film_id is NULL but captured in the left outer join while sakila.inventory contains no data for that movie 
+              
+the same thing happens with RIGHT OUTER JOIN
+              
+Three way OUTER JOINS
+              SELECT f.film_id, f.title, i.inventory_id, r.rental_date
+              FROM sakila.film f
+              LEFT OUTER JOIN sakila.inventory i 
+              ON f.film_id= i.film_id
+                      LEFT OUTER JOIN sakila.rental r
+                      ON i.inventory_id = r.inventory_id
+              WHERE f.film_id BETWEEN 13 AND 15;
+
+CROSS JOINS
+Cross joins are cartesian joins, they are basically cartesian product. They are not very common\
+			          SELECT c.name category_name, l.name language_name
+               FROM sakila.category c
+                  CROSS JOIN sakila.language l
+this query generates cartesian produict of the category and language tables = 96 rows (16 categ X 6 lang rows)
+              
+NATURAL JOINS
+Allows you to choose the tables to be joined but lets the database server determine what the join conditions need to be
+this type of join relies on identical column names 
+
+              SELECT c.first_name, c.last_name, date(r.rental_date)
+              FROM sakila.customer c
+              NATURAL JOIN sakila.rental r  # rental table contains a column named customer_id, which is the foreign key to the customer table, 
+              
+whose primary key is also named customer_id. The problem is sakila contains the last_update column to show when each column was last modified
+so the server is adding the join condition r.last_update - c.last_update which is why theres no data
+                
+need to restrict the columns for at least one of the tables
+            SELECT cust.first_name, cust.last_name, date(r.rental_date)
+            FROM 
+				    (SELECT customer_id, first_name, last_name
+                 FROM sakila.customer 
+                 ) cust 
+			      NATURAL JOIN sakila.rental r;
+            
+			 
