@@ -10,38 +10,44 @@ SUBQUERIES
 
 	SELECT customer_id cust_id, first_name, last_name
 	FROM sakila.customer
-	WHERE customer_id = MAX(customer_id) #These built in functions work on Select statements only not where clause
-	#So you would need a subquery to find the max cust _id and this cust_id first name , last name
+	WHERE customer_id = MAX(customer_id) 
+	
+	These built in functions work on Select statements only not where clause
+	So you would need a subquery to find the max cust _id and this cust_id first name , last name
 
-	#Self contained subqueries called: NONCORRELATED SUBQUERIES
-	#with inequality condition
+	Self contained subqueries called: NONCORRELATED SUBQUERIES
+	with inequality condition
+	
 	SELECT city_id, city
 	FROM sakila.city
 	WHERE country_id <>
 	(SELECT country_id FROM sakila.country WHERE country = 'India');
 	
-        #Can i use a join to work with both tables instead of using a subquery? A: YES but its more 
-        #lines of query
+        Can i use a join to work with both tables instead of using a subquery? A: YES but its more lines of query
+	
 	SELECT *
         FROM sakila.city;
         SELECT *
         FROM sakila.country
     
-        #A: yes 
+        A: yes 
+	
     	SELECT city_id, city
     	FROM sakila.city c
 		INNER JOIN sakila.country co
 		ON c.country_id = co.country_id 
 	WHERE co.country <> 'India'
     
-    	#cant have a subquery with multiple rows if its an equality condition 
+    	cant have a subquery with multiple rows if its an equality condition
+	
     	SELECT city_id, city
     	FROM sakila.city
 	WHERE country_id <>
 		(SELECT country_id FROM sakila.country WHERE country <> 'India');
-        #ERROR: returns more than 1 row
-        
-	#Multi-row, single column subqueries (IN AND NOT IN operators allow multiple row subqueries)
+		
+        ERROR: returns more than 1 row
+        Multi-row, single column subqueries (IN AND NOT IN operators allow multiple row subqueries)
+	
    	 SELECT city_id, city
     	FROM sakila.city
     	WHERE country_id IN 
