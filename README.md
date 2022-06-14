@@ -14,7 +14,6 @@ SUBQUERIES
 	
 	These built in functions work on Select statements only not where clause
 	So you would need a subquery to find the max cust _id and this cust_id first name , last name
-
 	Self contained subqueries called: NONCORRELATED SUBQUERIES
 	with inequality condition
 	
@@ -38,7 +37,7 @@ SUBQUERIES
 		ON c.country_id = co.country_id 
 	WHERE co.country <> 'India'
     
-    	cant have a subquery with multiple rows if its an equality condition
+    	Cant have a subquery with multiple rows if its an equality condition
 	
     	SELECT city_id, city
     	FROM sakila.city
@@ -142,12 +141,14 @@ SUBQUERIES
 
      CORRELATED SUBQUERIES 
    
-   	 (subqueries that are dependent on their containing statement) /*
+   	 (subqueries that are dependent on their containing statement) 
+	 
     	SELECT c.first_name, c.last_name
     	FROM sakila.customer c
     	WHERE 20 = 
 		(SELECT count(*) FROM sakila.rental r
 		 WHERE r.customer_id = c.customer_id);
+		 
 	 correlated subqueries can have performance issues if containing subquery returns a large number in this case the subquery runs every          time as compared to the containing query. 
          The containing query ran once and collected the 599 rows, then the whole correlated subquery runs once every 599 rows. 
          You can use equality conditions, ranges, with correlated subqueries
@@ -174,6 +175,7 @@ SUBQUERIES
      NOT EXISTS 
      
         This query helps us find instances where subqueries return no rows
+	
         SELECT a.first_name, a.last_name
         FROM sakila.actor a
         WHERE NOT EXISTS 
@@ -182,13 +184,17 @@ SUBQUERIES
 		      INNER JOIN sakila.film f ON f.film_id = fa.film_id
 		   WHERE fa.actor_id = a.actor_id
              AND f.rating = 'R');
-		#the UPDATE, DELETE, and INSERT statements also rely heavily on subqueries too
+	     
+	 the UPDATE, DELETE, and INSERT statements also rely heavily on subqueries too
+	 
          UPDATE sakila.customer c
          SET c.last_name = 
 			(SELECT max(r.rental_date) FROM sakila.rental r
-             WHERE r.customer_id = c.customer_id);   #problem with this is that if there is a
-             #customer with no film rental then rental date will be set to null 
-             #using the EXISTS op[erator protects the data. 
+             WHERE r.customer_id = c.customer_id);   
+	     
+	     problem with this is that if there is a customer with no film rental then rental date will be set to null 
+             using the EXISTS op[erator protects the data. 
+	     
 		UPDATE sakila.customer c
            SET c.last_name = 
 			(SELECT max(r.rental_date) FROM sakila.rental r
@@ -196,11 +202,13 @@ SUBQUERIES
 		 WHERE EXISTS #set only executes if the where statement evaluates to TRUE
 			(SELECT 1 FROM sakila.rental r
              WHERE r.customer_id = c.customer_id)
-             #THE SET clause only executes if the UPDATE condition WHERE evaluates to true
-             #meaning there was at least one rental found for the customer, preventing the 
-             #last_update column from being overwritten with a null.
+	     
+             THE SET clause only executes if the UPDATE condition WHERE evaluates to true
+             meaning there was at least one rental found for the customer, preventing the 
+             last_update column from being overwritten with a null.
              
-             #the DELETE statement also uses correlated subqueries
+             the DELETE statement also uses correlated subqueries
+	     
              DELETE FROM sakila.customer
              WHERE 365 < ALL 
                (SELECT datediff(now(), r.rental_date) days_since_last_rental
@@ -239,6 +247,7 @@ SUBQUERIES
 	 GROUP BY pymnt_grps.name;
 	
      Task oriented subqueries 
+     
     	 SELECT first_name, last_name, city, sum(amount) tot_payments, count(*) tot_rentals
      	 FROM sakila.payment p
         INNER JOIN sakila.customer c
