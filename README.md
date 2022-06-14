@@ -129,7 +129,7 @@ WHERE customer_id = MAX(customer_id) #These built in functions work on Select st
 		WHERE a.last_name = 'MONROE'
 		AND f.rating = 'PG');
 
-	#CORRELATED SUBQUERIES (pg171)
+	#CORRELATED SUBQUERIES 
     #(subqueries that are dependent on their containing statement)
     SELECT c.first_name, c.last_name
     FROM sakila.customer c
