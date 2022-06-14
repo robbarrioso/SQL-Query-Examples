@@ -129,8 +129,9 @@ Example Database SAKILA
 		WHERE a.last_name = 'MONROE'
 		AND f.rating = 'PG');
 
-   #CORRELATED SUBQUERIES 
-   	 #(subqueries that are dependent on their containing statement)
+   */ CORRELATED SUBQUERIES 
+   
+   	 (subqueries that are dependent on their containing statement) /*
     	SELECT c.first_name, c.last_name
     	FROM sakila.customer c
     	WHERE 20 = 
