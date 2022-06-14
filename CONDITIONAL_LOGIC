@@ -1,0 +1,125 @@
+CONDITIONAL LOGIC
+CASE expression used in SELECT, INSERT, UPDATE, DELETE statements
+
+
+Simple translations (1 for active 0 for inactive active column)
+    
+		SELECT first_name, last_name, #CASE here is in the SELECT statement 
+			CASE
+				WHEN active = 1 THEN 'ACTIVE'
+                ELSE 'INACTIVE'
+			END activity_type
+		 FROM sakila.customer;
+
+all major databases have built-in functions to mimic the if-then-else statement
+Oracle - decode(), MySQL - if(), SQL Server coalesce() 
+advantages over built in functions
+	1- CASE can be included in SELECT, INSTERT, UPDATE, DELETE statements
+	 Searched CASE Expressions
+
+e.g CASE
+WHEN C1 THEN E1
+WHEN C2 THEN E2
+WHEN CN THEN EN
+END
+        
+        CASE 
+			 WHEN category.name IN ('Children', 'Family', 'Sports', 'Animation')
+				THEN 'All Ages'
+			WHEN category.name = 'Horror'
+				THEN 'Adult'
+			WHEN category.name IN( 'Music', 'Games')
+				THEN 'Teens'
+			ELSE 'Other'
+		 END
+This case expression returns a string that can be used to classify films depending on their category. 
+CASE expression can return any type of expression, including subqueries. 
+This query uses CASE and a subquery to return number of rentals, but only for active customers
+        
+        SELECT c.first_name, c.last_name,
+			CASE 
+				WHEN active= 0 THEN 0
+                ELSE
+					(SELECT count(*) FROM sakila.rental r
+					 WHERE r.customer_id = c.customer_id)  #This is a correlated subquery. I couldve done
+			END num_rentals								 #a join customer on rental tables and group by customer id 
+            FROM sakila.customer c;   					#but depends on percentage of active customers.
+	
+Simple CASE Expressions are like searched case but less flexible
+    
+		CASE category.name
+			WHEN 'Children' THEN 'ALL Ages'
+            WHEN 'Family' THEN 'All Ages'
+            WHEN 'Sports' THEN 'All Ages'
+            WHEN 'Horror' THEN 'Adult'
+            ELSE 'Other' 
+		END
+    
+Here Case has a value. Simple case expressions are less flexible than searched case because you cant specify your own conditions
+EXAMPLES OF CASE EXPRESSIONS
+		
+Result set transformations
+I have been asked to show the number of film rentals for May, June, July of 2005
+
+            SELECT monthname(rental_date) rental_month,
+					count(*) num_rentals
+			    FROM sakila.rental 
+            WHERE rental_date BETWEEN '2005-05-01' AND '2005-08-01'
+            GROUP BY monthname(rental_date);   #I need the results to be a single row of data
+												#with three columns
+				 SELECT SUM(CASE WHEN monthname(rental_date) = 'May' THEN 1 #I can use searched case as the SELECT statements
+							ELSE 0 END) May_rentals,
+					   SUM(CASE WHEN monthname(rental_date) = 'June' THEN 1
+							ELSE 0 END) June_rentals,
+					   SUM(CASE WHEN monthname(rental_date) = 'July' THEN 1
+							ELSE 0 END) July_rentals
+				  FROM sakila.rental 
+				  WHERE rental_date BETWEEN '2005-05-01' AND '2005-08-01'
+          
+such transformations are only practical for a small number of values
+		
+CHECKING FOR EXISTENCE
+sometimes ill want to determine whether a relationship exists between two entities without regard for the quantity. E.g. (Whether an actor has appeared in at least one G-rated movie.
+Here is a case with multiple case expressions to generate three output columns. one G rated, one PG, one NC17 rated movies
+
+          SELECT a.first_name, a.last_name,
+		         CASE
+					WHEN EXISTS (SELECT 1 FROM sakila.film_actor fa
+								     INNER JOIN sakila.film f ON fa.film_id = f.film_id
+								 WHERE fa.actor_id = a.actor_id
+                                    AND f.rating = 'G') THEN 'Y'
+						ELSE 'N'
+					END g_actor,
+				 CASE
+					WHEN EXISTS (SELECT 1 FROM sakila.film_actor fa
+										INNER JOIN sakila.film f ON fa.film_id = f.film_id
+								 WHERE fa.actor_id = a.actor_id
+									AND f.rating = 'PG') THEN 'Y'
+					    ELSE 'N'
+					 END ph_actor,
+				 CASE
+					WHEN EXISTS (SELECT 1 FROM sakila.film_actor fa
+									INNER JOIN sakila.film f ON fa.film_id = f.film_id
+								 WHERE fa.actor_id = a.actor_id
+									AND f.rating = 'NC-17') THEN 'Y'
+						ELSE 'N'
+					END nc_17actor
+		   FROM sakila.actor a
+           WHERE a.last_name LIKE 'S%' OR a.first_name LIKE 'S%';
+           
+Here we dont care how many rows we encounter, just a relational condition if we care how many rows we encounter and want to keep track of that then
+this query is for you
+
+          SELECT f.title,
+				 CASE (SELECT count(*) FROM sakila.inventory i  #use a simple case expression
+					   WHERE i.film_id = f.film_id) 
+					WHEN 0 THEN 'Out of Stock'
+                    WHEN 1 THEN 'Scarce'
+                    WHEN 2 THEN 'Scarce'
+                    WHEN 3 THEN 'Available'
+                    WHEN 4 THEN 'Available'
+					ELSE 'Common'
+				  END film_availability
+		      FROM sakila.film f ;
+                       
+		  
