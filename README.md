@@ -12,8 +12,8 @@ SUBQUERIES
 	FROM sakila.customer
 	WHERE customer_id = MAX(customer_id) 
 	
-	*/ These built in functions work on Select statements only not where clause
-	*/ So you would need a subquery to find the max cust _id and this cust_id first name , last name
+	These built in functions work on Select statements only not where clause
+	So you would need a subquery to find the max cust _id and this cust_id first name , last name
 
 	Self contained subqueries called: NONCORRELATED SUBQUERIES
 	with inequality condition
@@ -62,7 +62,8 @@ SUBQUERIES
          FROM sakila.country 
          WHERE country IN ('Mexico', 'Canada'));
 	
-  	  #The ALL operator allows the equality condition to take in more than one value
+      The ALL operator allows the equality condition to take in more than one value
+      
    	 SELECT first_name, last_name
     	FROM sakila.customer
    	 WHERE customer_id <> ALL 
@@ -70,7 +71,8 @@ SUBQUERIES
          FROM sakila.payment
          WHERE amount = 0);
          
-		#can i not use an IN (it seems like i can but NOT IN doesnt check  against NULL values)
+	 can i not use an IN (it seems like i can but NOT IN doesnt check  against NULL values)
+	 
 	SELECT first_name, last_name
    	 FROM sakila.customer
     	WHERE customer_id NOT IN 
@@ -78,8 +80,8 @@ SUBQUERIES
          FROM sakila.payment
          WHERE amount = 0);
     
-    	#Another example using the ALL operator but in the HAVING clause. The ALL & ANY operators are 
-    	# only used with HAVING AND WHERE clause
+    	Another example using the ALL operator but in the HAVING clause. The ALL & ANY operators are only used with HAVING AND WHERE clause
+	
    	 SELECT customer_id, count(*)
     	FROM sakila.rental
     	GROUP BY customer_id
@@ -97,8 +99,9 @@ SUBQUERIES
 		WHERE co.country IN ('United States', 'Mexico', 'Canada')
         GROUP BY r.customer_id
         );
-	#The ANY operator. Like the ALL operator, but unlike ALL, ANY evaluates to true as soon
-  	  # as a single comparison is favorable. Not sure what is the difference
+	
+      The ANY operator. Like the ALL operator, but unlike ALL, ANY evaluates to true as soon as a single comparison is favorable. 
+      
     	SELECT customer_id, sum(amount)
 	FROM sakila.payment
    	 GROUP BY customer_id
@@ -117,7 +120,8 @@ SUBQUERIES
         GROUP BY co.country
         );
 
-	#MULTICOLUMN SUBQUERIES
+     MULTICOLUMN SUBQUERIES
+     
 	SELECT fa.actor_id, fa.film_id
 	FROM sakila.film_actor fa
 	WHERE fa.actor_id IN
@@ -125,7 +129,8 @@ SUBQUERIES
 		AND fa.film_id IN
 		(SELECT film_id FROM sakila.film WHERE rating= 'PG');
 
-	#CROSS JOIN 
+     CROSS JOIN 
+     
 	SELECT actor_id, film_id
 	FROM sakila.film_actor
 	WHERE (actor_id, film_id) IN 
@@ -135,7 +140,7 @@ SUBQUERIES
 		WHERE a.last_name = 'MONROE'
 		AND f.rating = 'PG');
 
-   */ CORRELATED SUBQUERIES 
+     CORRELATED SUBQUERIES 
    
    	 (subqueries that are dependent on their containing statement) /*
     	SELECT c.first_name, c.last_name
@@ -143,33 +148,32 @@ SUBQUERIES
     	WHERE 20 = 
 		(SELECT count(*) FROM sakila.rental r
 		 WHERE r.customer_id = c.customer_id);
-	 #correlated subqueries can have performance issues if containing subquery returns a large number
-     #in this case the subquery runs every time as compared to the containing query. 
-     #The containing query ran once and collected the 599 rows, then the whole correlated subquery 
-     #runs once every 599 rows. 
-     #You can use equality conditions, ranges, with correlated subqueries
+	 correlated subqueries can have performance issues if containing subquery returns a large number in this case the subquery runs every          time as compared to the containing query. 
+         The containing query ran once and collected the 599 rows, then the whole correlated subquery runs once every 599 rows. 
+         You can use equality conditions, ranges, with correlated subqueries
      
-     SELECT c.first_name, c.last_name
-     FROM sakila.customer c
-     WHERE 
+        SELECT c.first_name, c.last_name
+        FROM sakila.customer c
+        WHERE 
 		(SELECT sum(p.amount) FROM sakila.payment p
 		 WHERE p.customer_id = c.customer_id)
          BETWEEN 180 AND 240;
          
-   #The EXISTS OPERATOR
-     #the most common operator used to build conditions that utilize correlated subqueries
-     #@you use the EXISTS operator when you want to identify that a relationship exists without 
-     #regard for the quantity
-     #The exists operator doesnt care what data is returned from the subquery 
-		  SELECT c.first_name, c.last_name
+    The EXISTS OPERATOR
+     	the most common operator used to build conditions that utilize correlated subqueries
+     	you use the EXISTS operator when you want to identify that a relationship exists without regard for the quantity
+        The exists operator doesnt care what data is returned from the subquery 
+	
+	  SELECT c.first_name, c.last_name
           FROM sakila.customer c
           WHERE EXISTS
             (SELECT 1 from sakila.rental r
 			 WHERE r.customer_id = c.customer_id
                AND date(r.rental_date) < '2005-05-25');
                
-    #NOT EXISTS 
-        #This query helps us find instances where subqueries return no rows
+     NOT EXISTS 
+     
+        This query helps us find instances where subqueries return no rows
         SELECT a.first_name, a.last_name
         FROM sakila.actor a
         WHERE NOT EXISTS 
@@ -179,14 +183,14 @@ SUBQUERIES
 		   WHERE fa.actor_id = a.actor_id
              AND f.rating = 'R');
 		#the UPDATE, DELETE, and INSERT statements also rely heavily on subqueries too
-        UPDATE sakila.customer c
-        SET c.last_name = 
+         UPDATE sakila.customer c
+         SET c.last_name = 
 			(SELECT max(r.rental_date) FROM sakila.rental r
              WHERE r.customer_id = c.customer_id);   #problem with this is that if there is a
              #customer with no film rental then rental date will be set to null 
              #using the EXISTS op[erator protects the data. 
 		UPDATE sakila.customer c
-        SET c.last_name = 
+           SET c.last_name = 
 			(SELECT max(r.rental_date) FROM sakila.rental r
              WHERE r.customer_id = c.customer_id)
 		 WHERE EXISTS #set only executes if the where statement evaluates to TRUE
@@ -203,8 +207,8 @@ SUBQUERIES
                  FROM sakila.rental r
                  WHERE r.customer_id = customer.customer_id);
                  
-		#When to use Subqueries
-         SELECT c.first_name, c.last_name,
+	    When to use Subqueries
+             SELECT c.first_name, c.last_name,
 			pymnt.num_rentals, pymnt.tot_payments
 		FROM sakila.customer c 
 			INNER JOIN 
@@ -214,35 +218,35 @@ SUBQUERIES
               GROUP BY customer_id
               ) pymnt
               ON c.customer_id = pymnt.customer_id;
-			#subqueries in the FROM clause must be noncorrelated 
-	#Data Fabrication
-    	SELECT pymnt_grps.name, count(*) num_customers
-    	FROM
-    	(SELECT customer_id,
-      	count(*) num_rentals, sum(amount) tot_payments
+			subqueries in the FROM clause must be noncorrelated 
+	  Data Fabrication
+    	  SELECT pymnt_grps.name, count(*) num_customers
+    	  FROM
+    	  (SELECT customer_id,
+      	  count(*) num_rentals, sum(amount) tot_payments
 		 FROM sakila.payment
-     	GROUP BY customer_id
-     	) pymnt
-     	INNER JOIN
-	    (SELECT 'Small fry' name, 0 low_limit, 74.99 high_limit
-        UNION ALL
-        SELECT 'Average Joes' name, 75 low_limit, 149.99 high_limit
-        UNION ALL
-        SELECT 'Heavy Hitters' name, 150 low_limit, 999999.99 high_limit
+     	  GROUP BY customer_id
+     	  ) pymnt
+     	  INNER JOIN
+	      (SELECT 'Small fry' name, 0 low_limit, 74.99 high_limit
+           UNION ALL
+          SELECT 'Average Joes' name, 75 low_limit, 149.99 high_limit
+          UNION ALL
+           SELECT 'Heavy Hitters' name, 150 low_limit, 999999.99 high_limit
 		) pymnt_grps
-        ON pymnt.tot_payments
-          BETWEEN pymnt_grps.low_limit AND pymnt_grps.high_limit
-	GROUP BY pymnt_grps.name;
+           ON pymnt.tot_payments
+           BETWEEN pymnt_grps.low_limit AND pymnt_grps.high_limit
+	 GROUP BY pymnt_grps.name;
 	
-    #Task oriented subqueries 
+     Task oriented subqueries 
     	 SELECT first_name, last_name, city, sum(amount) tot_payments, count(*) tot_rentals
-     	FROM sakila.payment p
-       INNER JOIN sakila.customer c
-       ON p.customer_id = c.customer_id 
-       INNER JOIN sakila.address a 
-       ON c.address_id = a.address_id
-       INNER JOIN sakila.city ct
-       ON a.city_id = ct.city_id
+     	 FROM sakila.payment p
+        INNER JOIN sakila.customer c
+        ON p.customer_id = c.customer_id 
+        INNER JOIN sakila.address a 
+        ON c.address_id = a.address_id
+        INNER JOIN sakila.city ct
+        ON a.city_id = ct.city_id
 	GROUP BY c.first_name, c.last_name, ct.city;
 	
    	 SELECT c.first_name, c.last_name, 
@@ -261,18 +265,18 @@ SUBQUERIES
      	 INNER JOIN sakila.city ct
      	 ON a.city_id = ct.city_id
 	  
-  #Common table expressions (CTE)
-    	#Appears at the top in a WITH clause, can have multiple CTES, and make code more readable. 
-    	#allows CTE's to refer to  any other CTE defined above it in the same with clause.
-    	#here the second CTE refers to the first and the third refers to the second
-    	WITH actors_s AS
+   Common table expressions (CTE)
+    	 Appears at the top in a WITH clause, can have multiple CTES, and make code more readable. 
+    	 allows CTE's to refer to  any other CTE defined above it in the same with clause.
+    	 here the second CTE refers to the first and the third refers to the second
+    	 WITH actors_s AS
     	(SELECT actor_id, first_name, last_name
-     	FROM sakila.actor
+     	 FROM sakila.actor
 		 WHERE last_name LIKE 'S%'
-       ),
-       actors_s_pg AS
-       (SELECT s.actor_id, s.first_name, s.last_name,
-        f.film_id, f.title
+        ),
+        actors_s_pg AS
+        (SELECT s.actor_id, s.first_name, s.last_name,
+         f.film_id, f.title
 	  FROM actors_s s
 		INNER JOIN sakila.film_actor fa
         ON s.actor_id = fa.actor_id
@@ -296,9 +300,9 @@ SUBQUERIES
        GROUP BY spg_rev.first_name, spg_rev.last_name
        ORDER BY 3 DESC;
      
-    #SUBQUERIES as Expression Generators
-       #single-column, single-row scalar subqueries
-       #can be used anywhere an expression can appear like SELECT, ORDER BY, and the VALUES of an INSERT statement
+    SUBQUERIES as Expression Generators
+        single-column, single-row scalar subqueries
+        can be used anywhere an expression can appear like SELECT, ORDER BY, and the VALUES of an INSERT statement
         SELECT 
        (SELECT c.first_name FROM sakila.customer c #1
         WHERE c.customer_id = p.customer_id
@@ -318,13 +322,13 @@ SUBQUERIES
 		 count(*) tot_rentals
 	   FROM sakila.payment p
        GROUP BY p.customer_id
-       #There are two main differences between this query and the earlier version using a subquery
-       #in the from clause
-       #	1-instead of joining the customer, address, and city tables to the payment data, correlated scalar
-       #		subqueries are used in the select clause to look up the customer's first/last names and city.
-       #	2-The customer table is accessed three times (once in each od the three subqueries) rather than just one.
+       There are two main differences between this query and the earlier version using a subquery in the from clause
+       		1-instead of joining the customer, address, and city tables to the payment data, correlated scalar
+       		subqueries are used in the select clause to look up the customer's first/last names and city.
+       		2-The customer table is accessed three times (once in each od the three subqueries) rather than just one.
        
-       #Scalar Subqueries can also appear in the ORDER BY clause
+       Scalar Subqueries can also appear in the ORDER BY clause
+       
        SELECT a.actor_id , a.first_name, a.last_name
        FROM sakila.actor a
        ORDER BY 
