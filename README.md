@@ -265,10 +265,12 @@ SUBQUERIES
      	 INNER JOIN sakila.city ct
      	 ON a.city_id = ct.city_id
 	  
-   Common table expressions (CTE)
+   COMMON TABLE EXPRESSIONS (CTE)
     	 Appears at the top in a WITH clause, can have multiple CTES, and make code more readable. 
     	 allows CTE's to refer to  any other CTE defined above it in the same with clause.
     	 here the second CTE refers to the first and the third refers to the second
+	 
+	 
     	 WITH actors_s AS
     	(SELECT actor_id, first_name, last_name
      	 FROM sakila.actor
@@ -301,8 +303,11 @@ SUBQUERIES
        ORDER BY 3 DESC;
      
     SUBQUERIES as Expression Generators
+    
         single-column, single-row scalar subqueries
         can be used anywhere an expression can appear like SELECT, ORDER BY, and the VALUES of an INSERT statement
+	
+	
         SELECT 
        (SELECT c.first_name FROM sakila.customer c #1
         WHERE c.customer_id = p.customer_id
@@ -322,6 +327,7 @@ SUBQUERIES
 		 count(*) tot_rentals
 	   FROM sakila.payment p
        GROUP BY p.customer_id
+       
        There are two main differences between this query and the earlier version using a subquery in the from clause
        		1-instead of joining the customer, address, and city tables to the payment data, correlated scalar
        		subqueries are used in the select clause to look up the customer's first/last names and city.
