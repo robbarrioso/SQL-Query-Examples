@@ -1,4 +1,6 @@
-SELECT customer_id, first_name, last_name
+SUBQUERIES
+
+	SELECT customer_id, first_name, last_name
 	FROM sakila.customer
 	WHERE customer_id = (SELECT MAX(customer_id) FROM sakila.customer);
 
