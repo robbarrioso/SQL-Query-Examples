@@ -1,4 +1,4 @@
-# SQL (MySQL workbench + Command client, SQL Server, Oracle)
+# SQL Query examples (MySQL workbench + Command client, SQL Server, Oracle)
 
 Example Database SAKILA 
 
