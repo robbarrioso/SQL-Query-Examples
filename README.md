@@ -12,8 +12,8 @@ SUBQUERIES
 	FROM sakila.customer
 	WHERE customer_id = MAX(customer_id) 
 	
-	These built in functions work on Select statements only not where clause
-	So you would need a subquery to find the max cust _id and this cust_id first name , last name
+	*/ These built in functions work on Select statements only not where clause
+	*/ So you would need a subquery to find the max cust _id and this cust_id first name , last name
 
 	Self contained subqueries called: NONCORRELATED SUBQUERIES
 	with inequality condition
