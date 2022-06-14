@@ -2,7 +2,7 @@
 
 Example Database SAKILA 
 
-'''SUBQUERIES '''
+SUBQUERIES 
 
 	SELECT customer_id, first_name, last_name
 	FROM sakila.customer
