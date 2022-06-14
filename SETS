@@ -1,0 +1,68 @@
+SETS 
+blending multiple data sets together
+compound queries comprises multiple, otherwise-independent queries.
+      SELECT 1 num, 'abc' str
+      UNION
+      SELECT 9 num, 'xyz' str
+
+SET operators
+union vs union all 
+union sorts the combined set and removes duplicates whereas union all does not
+union all the number of rows in final data set will always equal sum of number of rows in the sets being combined
+
+            SELECT 'ACTR' typ, a.first_name, a.last_name
+            FROM sakila.actor as a
+            UNION ALL
+            SELECT 'ACTR' typ, a.first_name, a.last_name
+            FROM sakila.actor as a
+            ORDER BY last_name desc;
+            
+            SELECT c.first_name, c.last_name
+            FROM sakila.customer as c
+            WHERE c.first_name LIKE 'J%' AND c.last_name LIKE 'D%'
+            UNION ALL
+            SELECT a.first_name, a.last_name
+            FROM sakila.actor as a
+            WHERE a.first_name LIKE 'J%' AND a.last_name LIKE 'D%'
+            
+the UNION operator removes duplicates
+			      SELECT c.first_name, c.last_name
+            FROM sakila.customer as c
+            WHERE c.first_name LIKE 'J%' AND c.last_name LIKE 'D%'
+            UNION
+            SELECT a.first_name, a.last_name
+            FROM sakila.actor as a
+            WHERE a.first_name LIKE 'J%' AND a.last_name LIKE 'D%'
+            
+the INTERSECT operator (empty set nothing overlaps)  also removes duplicates
+
+				SELECT c.first_name, c.last_name
+				FROM sakila.customer as c
+				WHERE c.first_name LIKE 'D%' AND c.last_name LIKE 'T%'
+				INTERSECT
+				SELECT a.first_name, a.last_name
+				FROM sakila.actor as a
+				WHERE a.first_name LIKE 'D%' AND a.last_name LIKE 'T%';
+				
+(not empty set)
+
+				SELECT c.first_name, c.last_name
+				FROM sakila.customer as c
+				WHERE c.first_name LIKE 'J%' AND c.last_name LIKE 'D%'
+				INTERSECT
+				SELECT a.first_name, a.last_name
+				FROM sakila.actor as a
+				WHERE a.first_name LIKE 'J%' AND a.last_name LIKE 'D%';
+                
+Sorting compound query results
+
+				SELECT a.first_name as fname, a.last_name as lname
+				FROM sakila.actor as a
+				WHERE a.first_name LIKE 'J%' AND a.last_name LIKE 'D%'
+				UNION ALL
+				SELECT c.first_name, c.last_name
+				FROM sakila.customer as c
+				WHERE c.first_name LIKE 'J%' AND c.last_name LIKE 'D%'
+                ORDER BY lname, fname
+            
+            
