@@ -1,0 +1,85 @@
+            CREATE TABLE sakila.string_tbl
+            (char_fld CHAR(30),
+            vchar_fld VARCHAR(30),
+            text_fld TEXT
+            );
+
+            INSERT  INTO sakila.string_tbl (char_fld, vchar_fld, text_fld)
+            VALUES ('This is char data',
+              'This is varchar data',
+                'this is text data');
+
+                SELECT *
+                FROM sakila.string_tbl;
+
+            DELETE FROM sakila.string_tbl;
+
+LENGTH FUNCTION
+            SELECT LENGTH(char_fld) as char_length,
+              LENGTH(vchar_fld) as vchar_length,
+                LENGTH(text_fld) as text_length
+            FROM sakila.string_tbl
+
+            INSERT INTO sakila.string_tbl (char_fld, vchar_fld, text_fld)
+            VALUES ('This string is 28 characters',
+                'This string is 28 characters',
+                    'This string is 28 characters');
+
+POSITION FUNCTION
+
+            SELECT POSITION('characters' IN vchar_fld)
+            FROM sakila.string_tbl
+
+LOCATE FUNCTION
+            SELECT LOCATE('is', vchar_fld, 1)
+            FROM sakila.string_tbl
+
+            DELETE FROM sakila.string_tbl;
+
+            INSERT INTO sakila.string_tbl (text_fld)
+            VALUES ('This string was 29 characters');
+
+            UPDATE sakila.string_tbl
+            SET text_fld = CONCAT(text_fld, ' but now it is longer');
+
+            SELECT text_fld
+            FROM sakila.string_tbl
+
+            SELECT REPLACE('goodbye this is my world', 'goodbye','hello') 
+            FROM dual;
+
+            SELECT STUFF('hello world', 1, 5, 'goodbye cruel')
+
+            SELECT SUBSTRING('goodbye cruel world', 9,5);
+
+working with numeric data
+            SELECT MOD(10,4)
+            SELECT POW(2,8)
+            SELECT CEIL(72.445), FLOOR(72.445)
+            SELECT ROUND(72.4999), ROUND(72.5), ROUND(72.50001)
+            SELECT ROUND(72.0909,1), ROUND(72.0909,2), ROUND(72.0909, 3)
+            SELECT TRUNCATE(72.0909, 1), TRUNCATE(72.0909, 2), TRUNCATE(72.0909, 3)
+
+SIGNED DATA (positive and negative numbers)
+            SELECT account_id, SIGN(balance), ABS(balance)
+            FROM account
+
+Temporal data
+            SELECT @@global.time_zone, @@session.time_zone
+
+            SELECT CAST('2019-09-17 15:30:00' AS DATETIME)
+
+
+            UPDATE sakila.rental
+            SET return_date = STR_TO_DATE('September 17, 2019', '%M %d, %Y')
+            WHERE rental_id = 99999
+
+            SELECT CURRENT_DATE(), CURRENT_TIME(), CURRENT_TIMESTAMP()
+
+MANIPULATING TEMPORAL DATA
+            SELECT DATE_ADD( CURRENT_DATE() , INTERVAL 3 DAY)  
+            SELECT DATE_ADD( CURRENT_DATE() , INTERVAL 1 MONTH)
+            SELECT LAST_DAY(CURRENT_DATE())
+            SELECT DAYNAME(CURRENT_DATE())
+            SELECT DATEDIFF('2022-10-18', CURRENT_DATE())
+
