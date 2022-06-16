@@ -1,0 +1,500 @@
+SIMPLE CASE, CONDITIONAL UPDATES, NULL/ZERO, MULTI USER databases, VIEWS, 
+HIDING COMPLEXITY, INFORMATION SCHEMA
+
+Simple case expression
+            SELECT f.title, 
+              CASE (SELECT count(*) FROM sakila.inventory i
+                  WHERE i.film_id = f.film_id)
+                 WHEN 0 THEN 'Out of Stock'
+                   WHEN 1 THEN 'Scarce'
+                 WHEN 2 THEN 'Available'
+                   WHEN 3 THEN 'Available'
+                   WHEN 4 THEN 'Available'
+                   ELSE 'Common'
+              END film_availability
+            FROM sakila.film f
+            ;
+
+Division by zeros ensure denominators never equal to 0 to prevent all the calculations from being set to null always use conditional logic.
+
+            SELECT c.first_name, c.last_name, 
+                   sum(p.amount) tot_payment_amt,
+                   count(p.amount) num_payments,
+                   sum(p.amount)/
+                  CASE WHEN count(p.amount) = 0 THEN 1
+                     ELSE count(p.amount)
+                  END avg_payment
+            FROM sakila.customer c
+              LEFT OUTER JOIN sakila.payment p
+                ON c.customer_id = p.customer_id
+            GROUP BY c.first_name, c.last_name
+
+CONDITIONAL UPDATES 
+E.G. if i need to update the customer.active column to 0 for any customers
+who havent rented a film in the last 90 days.
+
+              UPDATE sakila.customer
+              SET active=
+                CASE 
+                  WHEN 90 <= (SELECT datediff(now(), max(rental_date))
+                        FROM sakila.rental r
+                                  WHERE r.customer_id = customer.customer_id)
+                    THEN 0
+                      ELSE 1
+                END
+              WHERE active = 1;
+
+HANDLING NULL VALUES
+If i want to display something besides a null i can use a case expression
+              SELECT c.first_name, c.last_name,
+                   CASE 
+                    WHEN a.address IS NULL THEN 'Unknown'
+                    ELSE a.address
+                   END address,
+                       CASE 
+                    WHEN ct.city IS NULL THEN 'Unknown'
+                            ELSE ct.city
+                   END city,
+                       CASE 
+                    WHEN cn.country IS NULL THEN 'Unknown'
+                            ELSE cn.country
+                   END country
+              FROM sakila.customer c
+                LEFT OUTER JOIN sakila.address a 
+                  ON c.address_id = a.address_id
+                LEFT OUTER JOIN sakila.city ct
+                  ON a.city_id = ct.city_id
+                LEFT OUTER JOIN sakila.country cn
+                  ON ct.country_id = cn.country_id
+                ORDER BY ct.city, cn.country
+
+
+
+Multi user databases
+Locking Most databases use 1 of two locking strategies
+  1- Database writers must request and receive from the server a write lock to modify data,
+	  and database readers must request and receive from the server a read lock to query data.
+		While multiple users can read data simultaneously, only one write lock is given out at a time
+    for each table. Read requests are block until the write lock is released.
+  2- Database writers must request and receive from the server a write lock 
+    
+Transaction  (puts together multiple sql statements such that either all or none of the statements succeed (property known as atomicity))
+ think of a bank transaction. Money transfered to savings from checking. First comes out of checking then it goes 
+ into savings. But what happens if it only comes out of checking and the system goes into maintenance? you 
+ never get your money into the savings.
+ to protect against this kind of error 
+	
+COMMIT AND ROLLBACK 
+ START TRANSACTION;
+withdraw money from first account, making sure balance is sufficient */
+               UPDATE account SET avail_balance = avail_balance - 500
+                WHERE account_id = 9988
+                  AND avail_balance > 500;
+                IF <exactly one row was updated by the previous statement> THEN
+                  /*deposit money into second account*/
+                  UPDATE account SET avail_balance  = avail_balance +500
+                  WHERE account_id = 9989;
+                IF <exactly one row was updated by the previous statement> THEN 
+                  /*everything worked, make the changes permanent */
+                      COMMIT,
+
+                ELSE
+                  /*Something went wrong, undo all chcanges in this transaction */
+                  ROLLBACK;
+                END IF;
+                ELSE
+                  /* Insufficient funds, or error encountered during update */
+                  ROLLBACK;
+                  END IF;
+
+                  ALTER TABLE sakila.customer
+                  ADD INDEX idx_email (email);
+    
+   for SQL Server and ORACLE you would use
+                  CREATE INDEX idx_email
+                  ON sakila.customer (email) #since these two treat table indexes as independent schema objects
+
+   HOW TO DISPLAY INDEXES 
+    SHOW INDEX FROM sakila.customer; # shows there are 5 indexes on customer table one on customer_id, and four others on 
+					store_id, address_id, last_name, and email columns.
+		if the index is not usefull you can delete it with this:
+       ALTER TABLE sakila.customer
+       DROP INDEX idx_email;
+       you can have duplicate names e.g john smith but can create a constraint about a specific column to set 
+       two datapoints appart like an email and try to enforce it with a UNIQUE INDEX on the customer.email column
+        
+  CREATING A UNIQUE INDEX customer.email column
+                    ALTER TABLE sakila.customer
+                    ADD UNIQUE idx_email (email);
+
+ifyou tryto add a new customer with an email address that already exists there will be an error
+                    INSERT INTO sakila.customer
+                    (store_id, first_name, last_name, email, address_id, active)
+                    VALUES
+                     (1, 'ALAN', 'KHAN', 'ALAN.KAHN@sakilacustomer.org', 394, 1);
+                     
+this customer is a duplicate and shows its for key 'idx_email'
+you should not build unique indexes on your primary key columns, the server already checks checks uniqueness
+for primary key values
+        
+MULTICOLUMN INDEXES
+if you are searching for first name AND last name you can also build indexes that span multiple columns.
+
+                    ALTER TABLE sakila.customer
+                    ADD INDEX idx_full_name (last_name, first_name);
+
+TYPES OF INDEXES 
+B-TREE INDEXES (balance tree indexes) MySQL, Oracle, SQL Server default to btree
+  organized as trees, with one or more levels of branch nodes leading to a single level of leaf nodes
+  branch nodes are used to navigate the tree, while leaf nodes hold the actual values and location info.
+
+    
+BITMAP INDEXES
+  Although BTREES are great for handling columns that contain different values , like names, they can become
+  unwieldy when built on a column that allows only a small number of values. Like an index for the customer.active
+  column to quickly retrieve all active or inactive accounts (low cardinality data) 
+  bitmap works great on low cardinality data but breaks if the values stored in the column climb too high in
+  relation to the number of rows (high cardinality data) for example we wouldnt do bitmap indexing on a primary
+  key because each row is unique (high cardinality)
+ 
+Oracle Bitmap 
+                  CREATE BITMAP INDEX idx_active ON sakila.customer (active);
+  bitmap are commonly used in data warehousing environments, where large amounts of data are generally indexed 
+  on columns containing relatively few values (sales quarters, geographic regions, products, salespeople)
+        
+TEXT INDEXES 
+For word phrases in documents. 
+    
+INDEXING EXAMPLES 
+    
+                    EXPLAIN  	#How to know which of the indexes will be utilized?
+                    SELECT customer_id, first_name, last_name
+                    FROM sakila.customer
+                    WHERE first_name LIKE 'S%' AND last_name LIKE 'P%'
+ The key tells you which index was chosen. In this case it was idx_full_name
+ The type tells you that a range scan will be utilized. 
+		
+DOWNSIDE OF INDEXES
+	EVERY time a table is updated or altered the indexes have to be modified as well. Therefore the more indexes there are 
+  the more work the server needs to do to keep schema objects up-to-date which slows things down. So only add indexes if 
+  the need arises 
+    
+HOW TO KNOW IF THERE ARE EITHER TOO MANY OR TOO FEW INDEXES.
+
+1- Make sure all primary key columns are indexed (most servers do it automatically) 
+	
+CONSTRAINTS 
+	Primary Key Constraints
+	  Identify the column or columns that guarantee uniqueness within a table
+	Foreign key constraings
+		Restrict one or more columns to contain only values found in another table's primary key columns
+	Unique Constraints
+		Restrict one or more columns to contain unique values within a table (primary key constr are a special type of unique constraint)
+	Check Constraints
+		Restrict the allowable values for a column
+
+CONSTRAINT CREATION
+	constraints are generally created at the same time as the associated table via the create table statement.
+                      CREATE TABLE customer (
+                    customer_id SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    store_id TINYINT UNSIGNED NOT NULL,
+                    first_name VARCHAR(45) NOT NULL,
+                    last_name VARCHAR(45) NOT NULL,
+                    email VARCHAR(50) DEFAULT NULL,
+                    address_id SMALLINT UNSIGNED NOT NULL,
+                    active BOOLEAN NOT NULL DEFAULT TRUE,
+                    create_date DATETIME NOT NULL,
+                    last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY  (customer_id),   										#THE PRIMARY KEY IS THE FIRST CONSTRAINT
+                    KEY idx_fk_store_id (store_id),
+                    KEY idx_fk_address_id (address_id),
+                    KEY idx_last_name (last_name),		#AND 2 MORE AS FOREIGN KEYS FOR THE ADDRESS AND STORE TABLES
+                    CONSTRAINT fk_customer_address FOREIGN KEY (address_id) REFERENCES address (address_id) ON DELETE RESTRICT ON UPDATE CASCADE,
+                    CONSTRAINT fk_customer_store FOREIGN KEY (store_id) REFERENCES store (store_id) ON DELETE RESTRICT ON UPDATE CASCADE
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    
+ you can include the foreign key constraint now (at time of table creation) or later through the ALTER TABLE method
+                    ALTER TABLE customer
+                    ADD CONSTRAINT fk_customer_address FOREIGN KEY (address_id)
+                    REFERENCES address (address_id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+                    ALTER TABLE customer
+                    ADD CONSTRAINT fk_customer_store FOREIGN KEY (store_id)
+                    REFERENCES store (store_id) ON DELETE RESTRICT ON UPDATE CASCADE;
+    
+ON DELETE RESTRICT 
+	Will cause the server to raise an error if a row is deleted in the parent table (address or store) that is referenced in the child table (customer)
+	Protects against orphaned records when rows are deleted from the parent table.
+ON UPDATE CASCADE
+	cause the server to propagate a change to the primary key value of a parent table (store or address) to the child table (customer)
+                    SELECT c.first_name, c.last_name, c.address_id, a.address
+                    FROM sakila.customer c
+                      INNER JOIN sakila.address a
+                        ON c.address_id = a.address_id
+                    WHERE a.address_id = 123
+    
+ If you try to delete a row from the parent table (address) table
+                    DELETE FROM sakila.address WHERE address_id = 123
+		there is an error that prevents you from deleting the row and creating orphaned data
+    because of the ON DELETE RESTRICT clause of the foreign key constraint the delete failed.
+        
+The ON UPDATE CASCADE clause also protects against orphaned records. When a primary key value is updated in the parent table using a diff strategy.
+                    UPDATE sakila.address
+                    SET address_id = 9999
+                    WHERE address_id = 123;
+   the value got changed now lets see what happened to the data
+    
+                    SELECT c.first_name, c.last_name, c.address_id, a.address
+                    FROM sakila.customer c
+                      INNER JOIN sakila.address a
+                        ON c.address_id = a.address_id
+                    WHERE a.address_id = 9999
+THE same results as before we made the change to 9999. This is called a CASCADE
+   EXAMPLES OF ON DELETE 
+		ON DELETE RESTRICT
+    ON DELETE CASCADE
+    ON DELETE SET NULL
+    ON UPDATE RESTRICT
+    ON UPDATE CASCADE
+    ON UPDATE SET NULL
+        
+VIEWS 
+	A mechanism for querying data. views do not involve data storage, they dont fill up disk space. 
+	
+                      CREATE VIEW customer_vw
+                         (customer_id, 
+                        first_name,
+                        last_name,
+                          email
+                          )
+                      AS
+                        SELECT
+                        customer_id,
+                        first_name,
+                        last_name,
+                        concat(substr(email, 1,2), '*****', substr(email, -4)) email
+                        FROM sakila.customer;
+
+Views are used to mask the contents of a table, for data security, 
+	DATA SECURITY (DATA PRIVACY) 
+		maybe not granting select permission and keeping the table private then create one or more views
+   	or omit and obscure sensitive columns.  you can also constrain which rows a set of users may access
+		by adding a WHERE clause to your view definition. 
+                      CREATE VIEW active_customer_vw
+                            (customer_id,
+                             first_name,
+                             last_name,
+                             email
+                             )
+                             AS
+                             SELECT 
+                        customer_id,
+                                first_name,
+                                last_name,
+                                concat(substr(email,1,2), '*****', substr(email, -4)) email
+                      FROM sakila.customer
+                            WHERE active = 1;
+    adding this where clause will only allow the end users to access information about active customers only. 
+    ORACLE has something called Virtual PRIVATE DATABASE (VPD) 
+DATA AGGREGATION
+	instead of allowing the application devs to write queries against base tables for aggregation you can use a view.
+                        CREATE VIEW sales_by_film_category
+                        AS
+                        SELECT 
+                    c.name as category,
+                            sum(p.amount) as total_sales
+                  FROM sakila.payment as p
+                    INNER JOIN sakila.rental as r on p.rental_id = r.rental_id
+                            INNER JOIN sakila.inventory as i on r.inventory_id = i.inventory_id
+                            INNER JOIN sakila.film as f on i.film_id = f.film_id
+                            INNER JOIN sakila.film_category as fc on f.film_id = fc.film_id
+                            INNER JOIN sakila.category as c on fc.category_id = c.category_id
+                  GROUP BY c.name
+                        ORDER BY total_sales DESC;
+
+HIDING COMPLEXITY
+                    CREATE VIEW film_stats
+                          AS
+                          SELECT f.film_id, f.title, f.description, f.rating,
+                           (SELECT c.name
+                           FROM sakila.category c
+                      INNER JOIN sakila.film_category fc
+                                ON c.category_id = fc.category_id
+                     WHERE fc.film_id = f.film_id) category_name,
+                           (SELECT count(*) 
+                            FROM sakila.film_actor fa
+                            WHERE fa.film_id = f.film_id
+                            ) num_actors,
+                            (SELECT count(*)
+                             FROM sakila.inventory i 
+                             WHERE i.film_id = f.film_id
+                      ) inventory_cnt,
+                            (SELECT count(*)
+                       FROM sakila.inventory i
+                       INNER JOIN sakila.rental r
+                                ON i.inventory_id = r.inventory_id
+                       WHERE i.film_id = f.film_id
+                       ) num_rentals
+                             FROM sakila.film f;
+
+JOINING PARTITIONED DATA
+   in order to improve performance some db designs break large tables into multiple pieces to improve performance.
+   if i wanted to see all data then i would have to query both tables by creating a view that queries both tables
+  	and combines the results together. 
+                        CREATE VIEW payment_all
+                         (payment_id,
+                          customer_id,
+                          staff_id,
+                          rental_id,
+                          amount,
+                          payment_date,
+                          last_update
+                          )
+                          AS 
+                          SELECT payment_id, customer_id, staff_id, rental_id,
+                              amount, payment_date, last_update
+                    FROM payment_historic
+                          UNION ALL 
+                          SELECT payment_id, customer_id, staff_id, rental_id,
+                          FROM payment_current;
+
+ UPDATABLE VIEWS 
+	 MySQL, ORACLE, and SQL SERVER allow users to modify data through a view, as long as you abide by certain restrictions.
+     A view is updatable if
+     1-no aggregate functions used
+     2-view does not employ group by or having clauses
+     3-No subqueries in SELECT or FROM clause, and subqueries in the WHERE clause do not refer to tables in the FROM clause.
+	 	 4-no UNION, UNION ALL, DISTINCT
+     5-FROM clause include at least one table or updatable view
+     6-FROM clause uses only inner joins if more than one table or view
+            
+                            CREATE VIEW customer_vw
+                            (customer_id,
+                       first_name,
+                             last_name,
+                             email
+                             )
+                             AS 
+                             SELECT 
+                                customer_id,
+                                first_name,
+                                last_name,
+                                concat(substr(email,1,2), '*****', substr(email, -4)) email
+                      FROM sakila.customer;
+      This view doesn't break or violate any of the restrictions mentioned earlier
+           
+                        UPDATE customer_vw
+                        SET last_name = 'SMITH-ALLEN'
+                        WHERE customer_id = 1;
+
+                        SELECT * 
+                        FROM sakila.customer_vw
+
+                        SELECT *
+                        FROM sakila.customer
+                        WHERE customer_id = 1;
+       you can modify most columns here except the email column because it was derived from an expression
+                        UPDATE customer_vw
+                        SET email = 'MARY.SMITH-ALLEN@sakilacustomer.org'
+                        WHERE customer_id = 1
+        email is not updatable 
+        even if you try to insert data into other columns instead you can't: views that contain 
+        derived columns cannot be used for inserting data. 
+
+                        INSERT INTO customer_vw
+                        (customer_id,
+                         first_name,
+                         last_name)
+                         VALUES (9999, 'ROBERT', 'SIMPSON');   #VIEW NOT INSERTABLE
+
+UPDATING COMPLEX VIEWS
+                        CREATE VIEW customer_details
+                         AS
+                         SELECT c.customer_id,
+                          c.store_id,
+                          c.first_name,
+                          c.last_name,
+                          c.address_id,
+                          c.active,
+                          c.create_date,
+                          a.address,
+                          ct.city,
+                          cn.country,
+                          a.postal_code
+                     FROM sakila.customer c
+                      INNER JOIN sakila.address a
+                              ON c.address_id = a.address_id
+                      INNER JOIN sakila.city ct
+                              ON a.city_id = ct.city_id
+                      INNER JOIN sakila.country cn
+                        ON ct.country_id = cn.country_id;
+              
+I can update data in either the customer or address table
+                    UPDATE customer_details
+                    SET last_name = 'SMITH-ALLEN', active=0 
+                    WHERE customer_id = 1;
+    OR
+
+                    UPDATE customer_details
+                    SET address = '999 Mockingbird Lane'
+                    WHERE customer_id = 1;
+        
+WHAT HAPPENS if i try to from both tables in a single statement
+                    UPDATE customer_details
+                        SET last_name = 'SMITH-ALLEN', active=0 , address = '999 Mockingbird Lane'
+                        WHERE customer_id = 1;
+Can't modify more than one base table through a join view
+        
+ Can't insert into multiple tables through a join view
+                    INSERT INTO customer_details
+                    (customer_id, store_id, first_name, last_name,
+                    address_id, active, create_date, address)
+                    VALUES(9999,2,'THOMAS','BISHOP', 7,1,now(),
+                    '999 Mockingbird Lane');
+   
+META DATA (DATA DICTIONARY OR SYSTEM CATALOG)
+	when creating a table with columns, a primary key constraint , etc the server needs to store the following info
+  table name, storage engine, column data types, primary key columns, etc..
+  This data is collectively called DATA DICTIONARY
+	different database servers use a diff mechanism to publish metadata
+   1-a set of views as ORACLES database user_tables and all_constraints views
+   2-a set of system stored proceduresm such as SQL Server's sp_tables procedure or ORACLE's database's dbms_metadata package
+	 3-a special database such a MYSQL information_schema database
+        
+INFORMATION SCHEMA OBJECTS (MYSQL & SQL SERVER)
+	All objects within the information_schema database (or schema in SQL Server) are views.
+        
+                      SELECT table_name, table_type
+                      FROM information_schema.tables
+                      WHERE table_schema = 'sakila'
+                      ORDER BY 1;
+	THE information_schema.tables view includes both tables and views.
+                    SELECT table_name, table_type
+                        FROM information_schema.tables 
+                        WHERE table_schema = 'sakila' AND table_type = 'BASE TABLE'
+                        ORDER BY 1;
+	to include only base tables not views 
+                      SELECT table_name, is_updatable
+                          FROM information_schema.views 
+                          WHERE table_schema = 'sakila' 
+                          ORDER BY 1;           
+		to include only views
+            
+                      SELECT * 
+                          FROM information_schema.columns
+                          WHERE table_schema = 'sakila' AND table_name = 'film'
+                          ORDER BY ordinal_position
+        
+   YOU CAN retrieve information about a table's indexes via the INFORMATION_SCHEMA.STATISTICS
+                      SELECT index_name, non_unique, seq_in_index, column_name
+                      FROM information_schema.statistics
+                      WHERE table_schema = 'sakila' AND table_name = 'rental'
+                      ORDER BY 1,3; #indexes about this table
+
+    Retrieve the different kinds of constraints (foreign, primary, unique)
+                        SELECT constraint_name, table_name, constraint_type
+                        FROM information_schema.table_constraints
+                        WHERE table_schema = 'sakila'
+                        ORDER BY 3,1
+
+ 
