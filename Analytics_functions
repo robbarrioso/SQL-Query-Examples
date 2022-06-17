@@ -1,0 +1,205 @@
+Analytic Functions
+
+Data Windows
+Windows are defined using the OVER clause along with the PARTITION by subclause.
+An empty partition tells the window to include the entire set result, 
+The second one specifies that the window whould include only rows within the same quarter.
+              SELECT quarter(payment_date) quarter,
+              monthname(payment_date) month_nm,
+                  sum(amount) monthly_sales
+            FROM sakila.payment
+              WHERE year(payment_date) = 2005
+              GROUP BY quarter(payment_date), monthname(payment_date);
+	
+ In order determine highest values to determine highes monthly total
+ across all four months and highest total by quarter.
+                SELECT quarter(payment_date) quarter,
+                  monthname(payment_date) month_nm,
+                      sum(amount) monthly_sales,
+                      max(sum(amount))
+                    over () max_overall_sales,
+                  max(sum(amount))
+                    over (partition by quarter(payment_date)) max_qrtr_sales
+                FROM sakila.payment
+                  WHERE year(payment_date) = 2005
+                  GROUP BY quarter(payment_date), monthname(payment_date);
+
+Groups rows into windows 
+
+Localized Sorting (OVER CLAUSE)
+	Ranking
+                SELECT quarter(payment_date) quarter,
+                  monthname(payment_date) month_nm,
+                      sum(amount) monthly_sales,
+                      rank() over (order by sum(amount) desc) sales_rank
+                FROM sakila.payment
+                  WHERE year(payment_date) = 2005
+                  GROUP BY quarter(payment_date), monthname(payment_date)
+                  ORDER BY 1,2;
+    
+	multiple order by clauses
+	ranking order by 
+                  SELECT quarter(payment_date) quarter,
+                    monthname(payment_date) month_nm,
+                    sum(amount) monthly_sales,
+                    rank() over (partition by quarter(payment_date) #partitions data payment_date into quarter
+                      order by sum(amount) desc) qtr_sales_rank   #and ranks it by the sum(amount) order by clause
+                  FROM sakila.payment
+                  WHERE year(payment_date) = 2005
+                  GROUP BY quarter(payment_date), monthname(payment_date)
+                  ORDER BY 1, month(payment_date);   
+            
+RANKING FUNCTIONS
+		ROW_NUMBER
+			returns a unique number for each row, with rankings arbitratily assigned in case of a tie
+    RANK
+			returns the same ranking in case of a tie, with gaps in the rankings
+    DENSE_RANK
+		  returns the same ranking in case of a tie, with no gaps in the rankings
+                  SELECT customer_id, count(*) num_rentals
+                        FROM sakila.rental
+                        GROUP BY customer_id
+                        ORDER BY 2 desc;
+    customer 3 and 4 have the same number of rentals what should they be ranked? same ranking? different?
+                    SELECT customer_id, count(*) num_rentals,
+                      row_number() over (order by count(*) desc) row_number_rnk,
+                              rank() over (order by count(*) desc) rank_rnk, #leaves a gap after a tie
+                              dense_rank() over (order by count(*) desc) dense_rank_rnk #doesnt leave a gap after tie
+                          FROM sakila.rental
+                          GROUP BY customer_id
+                          ORDER BY 2 desc;
+            
+GENERATING MULTIPLE RANKINGS
+                        SELECT customer_id,
+                          monthname(rental_date) rental_month,
+                                  count(*) num_rentals,
+                                  rank() over (partition by monthname(rental_date)
+                            order by count(*) desc ) rank_rnk
+     leaves a gap after a tie doesnt leave a gap after tie
+                        FROM sakila.rental
+                        GROUP BY customer_id, monthname(rental_date)
+                        ORDER BY 2, 3 desc;
+            
+	to only include top 5 from every month
+                      SELECT customer_id, rental_month, num_rentals,
+                          rank_rnk ranking
+                      FROM 
+                        (SELECT customer_id,
+                        monthname(rental_date) rental_month,
+                                count(*) num_rentals,
+                                rank() over (partition by monthname(rental_date)
+                          order by count(*) desc ) rank_rnk  
+                                 #leaves a gap after a tie
+                                 #doesnt leave a gap after tie
+                        FROM sakila.rental
+                        GROUP BY customer_id, monthname(rental_date)
+                        ) cust_rankings
+                                WHERE rank_rnk <= 5
+                                ORDER BY rental_month, num_rentals desc, rank_rnk;
+Analytic functions can only be used in the SELECT clause
+         
+REPORTING FUNCTIONS
+	finding outliers (min or max values sums or averages) instead of using these tools with group by
+	 will use the over clause
+                          SELECT monthname(payment_date) payment_month,
+                          amount,
+                                  sum(amount)
+                            over (partition by monthname(payment_date)) monthly_total, #result set split into multiple data windows. (one for each month)
+                          sum(amount) over () grand_total #although it shows the same amount 1262 for every row
+                      FROM sakila.payment							#you can still use it for calculations
+                          WHERE amount >= 10
+                          ORDER BY 1;
+        
+   you can use the grand_total column for calculations
+                        SELECT monthname(payment_date) payment_month,
+                        sum(amount) month_total,
+                        round(sum(amount) / sum(sum(amount)) over () #this sums the monthly sums and calculates the percentage of the total payments
+                               * 100, 2) pct_of_total
+                    FROM sakila.payment
+                        GROUP BY monthname(payment_date);
+        
+  Reporting func can also be used for comparisons, this query uses case expression to determine
+    whether a monthly total is the max, min, or someqhere in the middle.
+                      SELECT monthname(payment_date) payment_month,
+                      sum(amount) month_total,
+                              CASE sum(amount)
+                        WHEN max(sum(amount)) over () THEN 'Highest'
+                        WHEN min(sum(amount)) over () THEN 'Lowest'
+                                  ELSE 'Middle'
+                      END descriptor
+                  FROM sakila.payment
+                      GROUP BY monthname(payment_date);
+   descriptor acts as a quasi-ranking function, it helps identify top/bottom values across a set of rows.
+
+WINDOW FRAMES (use the partition by clause)
+	allows you to group rows by common values. But if i need finer control over which
+    rows to include in a data window?  frame subclauses help define exactly which rows to include in data window.
+        
+     sums payments for each week and includes a reporting function to calculate rolling sum.
+                        SELECT yearweek(payment_date) payment_week,
+                        sum(amount) week_total,
+                                sum(sum(amount))
+                          over (order by yearweek(payment_date)
+                            rows unbounded preceding) rolling_sum #Includes the rows unbounded preceding subclause to define a data window from the beginning 
+                    FROM sakila.payment								#of the result set up to and including current row.
+                        GROUP BY yearweek(payment_date)
+                        ORDER BY 1;
+        
+	just like rolling sums you can do rolling averages too
+   three week rolling average of total payments.
+        
+                        SELECT yearweek(payment_date) payment_week,
+                        sum(amount) week_total,
+                                avg(sum(amount))
+                          over (order by yearweek(payment_date)
+                            rows between 1 preceding and 1 following) rolling_3wk_avg #specifies the row before, the current row, and the following one. 
+                    FROM sakila.payment							
+                        GROUP BY yearweek(payment_date)
+                        ORDER BY 1;
+     defines a data window consisting of the average for current row, the prior row, and the next row. 
+     If there is a gap of a week 200521, 200522, and 200524 but no data for week 200523, 
+     If you want to specify a date interval rather than a number of rows, you can specify
+     a range for you data window.
+        
+                      SELECT date(payment_date), sum(amount),
+                    avg(sum(amount)) over (order by date(payment_date)
+                                range between interval 3 day preceding 
+                                                  and interval 3 day following) 7_day_avg
+                  FROM sakila.payment
+                      WHERE payment_date BETWEEN '2005-07-01' AND '2005-09-01'
+                      GROUP BY date(payment_date)
+                      ORDER BY 1;
+	E.G 2005-08-16 only includes values for 08-16, 08-17,08-19 since there are no rows
+		for the three prior dates (08-13-15) 
+            
+LAG AND LEAD
+	along computing sums and averages over a data window, another common reporting 
+      task involves comparing values from one row to another.
+		
+    e.g if im generating mnthly sales totals, and want a coluimn showing percentage diff
+		from prior month. 
+            
+     using lag function will retrieve a column value from a following row.
+                    SELECT yearweek(payment_date) payment_week,
+                        sum(amount) week_total,
+                        lag(sum(amount), 1) #previous week
+                          over (order by yearweek(payment_date)) prev_wk_tot,
+                        lead(sum(amount),1)
+                          over (order by yearweek(payment_date)) next_wk_tot
+                    FROM sakila.payment
+                          GROUP BY yearweek(payment_date)
+                          ORDER BY 1;
+     generate the lag function percentage diff from the prior week.
+                            SELECT yearweek(payment_date) payment_week,
+                          sum(amount) week_total,
+                                    round((sum(amount) - lag(sum(amount), 1)
+                            over (order by yearweek(payment_date)))
+                                        / lag(sum(amount),1) 
+                                        over (order by yearweek(payment_date))
+                                        * 100, 1) pct_diff
+                      FROM sakila.payment
+                            GROUP BY yearweek(payment_date)
+                            ORDER BY 1;
+            
+   
+        
