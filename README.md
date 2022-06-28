@@ -28,24 +28,24 @@ Percent total of overall sales by country
 WHAT CATEGORIES DO MOST ACTORS/ACTRESSES REPRESENT? SHOW THE BIGGEST ONE
 SHOWS ACTOR/ACTRESS full name ALONG WITH THE CATEGORY OF FILM WHICH HAS THE MAX PERCENTAGE OF TOTAL MOVIES FOR ALL CATEGORIES.
 
-				SELECT B.full_name, B.name category, B.num_films, B.tot_films,
-					CONCAT(max(B.percent_starring_roles), '%') highest_starring_film_percentage 
-				FROM 
-				(
-				SELECT CONCAT(a.first_name,' ', a.last_name) full_name , c.name, 
-					count(c.name) num_films, sum(count(c.name)) over (partition by concat(a.first_name, ' ',a.last_name)) tot_films,
-					ROUND(((count(c.name) / sum(count(c.name)) over 
-						(partition by concat(a.first_name, ' ',a.last_name)) ) * 100), 1) percent_starring_roles
-				FROM sakila.actor a
-				INNER JOIN sakila.film_actor fa ON a.actor_id = fa.actor_id
-				INNER JOIN sakila.film f ON fa.film_id = f.film_id
-				INNER JOIN sakila.film_category fc ON f.film_id = fc.film_id
-				INNER JOIN sakila.category c ON fc.category_id = c.category_id
-				GROUP BY a.first_name, a.last_name , c.name
-				ORDER BY full_name desc, num_films desc
-				) B
-				GROUP BY B.full_name
-				ORDER BY B.full_name asc
+		SELECT B.full_name, B.name category, B.num_films, B.tot_films,
+			CONCAT(max(B.percent_starring_roles), '%') highest_starring_film_percentage 
+		FROM 
+		(
+		SELECT CONCAT(a.first_name,' ', a.last_name) full_name , c.name, 
+			count(c.name) num_films, sum(count(c.name)) over (partition by concat(a.first_name, ' ',a.last_name)) tot_films,
+			ROUND(((count(c.name) / sum(count(c.name)) over 
+				(partition by concat(a.first_name, ' ',a.last_name)) ) * 100), 1) percent_starring_roles
+		FROM sakila.actor a
+		INNER JOIN sakila.film_actor fa ON a.actor_id = fa.actor_id
+		INNER JOIN sakila.film f ON fa.film_id = f.film_id
+		INNER JOIN sakila.film_category fc ON f.film_id = fc.film_id
+		INNER JOIN sakila.category c ON fc.category_id = c.category_id
+		GROUP BY a.first_name, a.last_name , c.name
+		ORDER BY full_name desc, num_films desc
+		) B
+		GROUP BY B.full_name
+		ORDER BY B.full_name asc
         
 	
 ![max_percentage_actr_by_genre](https://user-images.githubusercontent.com/67971912/176245583-9b03e885-932d-40db-840a-285d37cbed32.png)
