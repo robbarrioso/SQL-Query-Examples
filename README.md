@@ -20,7 +20,8 @@ Percent total of overall sales by country
           HAVING B.tot_per_country > 1 #must have more than 1 sale per country
           ORDER BY B.tot_per_country desc
           
-          ![percent_total_sales_by_country](https://user-images.githubusercontent.com/67971912/176245207-b61a6d48-fb7b-4cf3-8c2d-8b1908ed9c77.png)
+	  
+ ![percent_total_sales_by_country](https://user-images.githubusercontent.com/67971912/176245207-b61a6d48-fb7b-4cf3-8c2d-8b1908ed9c77.png)
 
 
 WHAT CATEGORIES DO MOST ACTORS/ACTRESSES REPRESENT? SHOW THE BIGGEST ONE
@@ -43,4 +44,5 @@ SHOWS ACTOR/ACTRESS full name ALONG WITH THE CATEGORY OF FILM WHICH HAS THE MAX 
 				GROUP BY B.full_name
 				ORDER BY B.full_name asc
         
-        ![max_percentage_actr_by_genre](https://user-images.githubusercontent.com/67971912/176245583-9b03e885-932d-40db-840a-285d37cbed32.png)
+	
+![max_percentage_actr_by_genre](https://user-images.githubusercontent.com/67971912/176245583-9b03e885-932d-40db-840a-285d37cbed32.png)
