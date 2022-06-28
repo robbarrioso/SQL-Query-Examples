@@ -5,7 +5,7 @@ Example Database SAKILA found at https://dev.mysql.com/
 
 Analysis using data windows, basic clause, sub-queries, and others.
 
-Percent total of overall sales by country 
+PERCENT TOTAL OF OVERALL SALES BY COUNTRY 
 
           SELECT B.country, B.tot_per_country, B.percent_total
           FROM 
