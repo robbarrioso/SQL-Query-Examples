@@ -3,7 +3,7 @@
 Example Database SAKILA found at https://dev.mysql.com/
 
 
-Analysis using data windows, basic clause, sub-queries, and others.
+Analysis using data windows, basic clause, sub-queries, joins, and others.
 
 PERCENT TOTAL OF OVERALL SALES BY COUNTRY 
 
