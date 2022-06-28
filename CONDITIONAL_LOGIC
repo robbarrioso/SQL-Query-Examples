@@ -24,14 +24,14 @@ WHEN CN THEN EN
 END
         
         CASE 
-			 WHEN category.name IN ('Children', 'Family', 'Sports', 'Animation')
-				THEN 'All Ages'
-			WHEN category.name = 'Horror'
-				THEN 'Adult'
-			WHEN category.name IN( 'Music', 'Games')
-				THEN 'Teens'
-			ELSE 'Other'
-		 END
+		WHEN category.name IN ('Children', 'Family', 'Sports', 'Animation')
+			THEN 'All Ages'
+		WHEN category.name = 'Horror'
+			THEN 'Adult'
+		WHEN category.name IN( 'Music', 'Games')
+			THEN 'Teens'
+		ELSE 'Other'
+		END
 This case expression returns a string that can be used to classify films depending on their category. 
 CASE expression can return any type of expression, including subqueries. 
 This query uses CASE and a subquery to return number of rentals, but only for active customers
