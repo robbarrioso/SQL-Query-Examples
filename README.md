@@ -52,37 +52,41 @@ SHOWS ACTOR/ACTRESS full name ALONG WITH THE CATEGORY OF FILM WHICH HAS THE MAX 
 
 WHICH COUNTRIES HAVE THE HIGHEST RANKING BY NUMBER OF RENTALS AND FILM TITLE? (COMMON TABLE EXPRESSION, SUB-		QUERIES, RANKINGS, DATA WINDOWS)
 
-                  SELECT  B.title, B.country, B.max_by_country
-                  FROM 
-                  (
-                  SELECT A.title , A.country, A.max_by_country, 
-                         dense_rank() over (partition by A.title order by A.max_by_country desc) dense_ranking,
-                         rank() over (partition by A.title order by A.max_by_country desc) ranking,
-                         row_number() over (partition by A.title order by A.max_by_country desc) row_number_rank
-                   FROM (
+SELECT B.title, B.country, B.max_by_country, B.tot_num_by_title
+                        FROM 
+                        (
+                        SELECT A.title , A.country, A.max_by_country, A.tot_num_by_title,
+                                #dense_rank() over (partition by A.title order by A.max_by_country desc) dense_ranking,
+                                #rank() over (partition by A.title order by A.max_by_country desc) ranking,
+                                row_number() over (partition by A.title order by A.max_by_country desc) row_number_rank
+                        FROM (
                         
-                   WITH cust_adrs_rent_film AS (
-                   SELECT customer_id, inventory_id, rental_id , c.first_name, c.last_name,
-						c.address_id, cy.city, ct.country, f.title, f.film_id
-                   FROM sakila.rental
-                   INNER JOIN sakila.customer c USING (customer_id)
-                   INNER JOIN sakila.address a USING (address_id)
-                   INNER JOIN sakila.city cy USING (city_id)
-                   INNER JOIN sakila.country ct USING (country_id)
-                   INNER JOIN sakila.inventory i USING (inventory_id)
-                   INNER JOIN sakila.film f USING (film_id)
-                   ), 
-                   cust_inv_rental_id AS
-                   (SELECT carf.title, carf.country, count(*) over (partition by  carf.film_id ,
-					carf.country) max_by_country
-                    FROM cust_adrs_rent_film carf ) 
-                    SELECT ciri.title, ciri.country,  MAX(ciri.max_by_country) max_by_country
-                    FROM cust_inv_rental_id ciri
-                    GROUP BY ciri.title, ciri.country
-                    ) A
-                    ORDER BY  A.title
-                    )B
-                    WHERE B.row_number_rank = 1
+                        WITH cust_adrs_rent_film AS (
+                        SELECT customer_id, inventory_id, rental_id , c.first_name, c.last_name,
+								c.address_id, cy.city, ct.country, f.title, f.film_id
+                        FROM sakila.rental
+                        INNER JOIN sakila.customer c USING (customer_id)
+                        INNER JOIN sakila.address a USING (address_id)
+                        INNER JOIN sakila.city cy USING (city_id)
+                        INNER JOIN sakila.country ct USING (country_id)
+                        INNER JOIN sakila.inventory i USING (inventory_id)
+                        INNER JOIN sakila.film f USING (film_id)
+                        ), 
+                        cust_inv_rental_id AS
+                        (SELECT carf.title, carf.country, count(*) over (partition by  carf.film_id ,
+						carf.country) max_by_country ,
+						count(*) over (partition by carf.title, carf.film_id) tot_num_by_title
+                         FROM cust_adrs_rent_film carf 
+                         ) 
+                         SELECT ciri.title, ciri.country,  MAX(ciri.max_by_country) max_by_country, tot_num_by_title
+								
+                         FROM cust_inv_rental_id ciri
+                         GROUP BY ciri.title, ciri.country
+                         ) A
+                         ORDER BY  A.title
+                         )B
+                         WHERE B.row_number_rank = 1
+
 		    
 		    
 ![film_ranking_by_country](https://user-images.githubusercontent.com/67971912/176557989-2d3f7d19-b8ca-4b08-919b-b09bc186345a.png)
