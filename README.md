@@ -89,4 +89,5 @@ SELECT B.title, B.country, B.max_by_country, B.tot_num_by_title
 
 		    
 		    
-![film_ranking_by_country](https://user-images.githubusercontent.com/67971912/176557989-2d3f7d19-b8ca-4b08-919b-b09bc186345a.png)
+
+![film_ranking_by_country1](https://user-images.githubusercontent.com/67971912/176559428-0c268866-048c-40e7-8e3d-8d45702a1c2a.png)
