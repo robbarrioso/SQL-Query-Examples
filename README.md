@@ -52,12 +52,11 @@ SHOWS ACTOR/ACTRESS full name ALONG WITH THE CATEGORY OF FILM WHICH HAS THE MAX 
 
 WHICH COUNTRIES HAVE THE HIGHEST RANKING BY NUMBER OF RENTALS AND FILM TITLE? (COMMON TABLE EXPRESSION, SUB-		QUERIES, RANKINGS, DATA WINDOWS)
 
-SELECT B.title, B.country, B.max_by_country num_rentals_by_country , B.tot_num_by_title num_rentals_by_film, CONCAT(ROUND(((B.max_by_country / B.tot_num_by_title) * 100), 2), ' ', '%') percent_of_total_rentals
+			SELECT B.title, B.country, B.max_by_country num_rentals_by_country , B.tot_num_by_title num_rentals_by_film, 
+				CONCAT(ROUND(((B.max_by_country / B.tot_num_by_title) * 100), 2), ' ', '%') percent_of_total_rentals
                         FROM 
                         (
                         SELECT A.title , A.country, A.max_by_country, A.tot_num_by_title,
-                                #dense_rank() over (partition by A.title order by A.max_by_country desc) dense_ranking,
-                                #rank() over (partition by A.title order by A.max_by_country desc) ranking,
                                 row_number() over (partition by A.title order by A.max_by_country desc) row_number_rank
                         FROM (
                         
