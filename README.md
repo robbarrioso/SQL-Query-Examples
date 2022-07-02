@@ -12,7 +12,7 @@ PERCENT TOTAL OF OVERALL SALES BY COUNTRY
           (
           SELECT co.country, count(co.country) tot_per_country, 
 	   	sum(count(co.country)) over () tot_overall_countries, 
-          concat(((count(co.country) / sum(count(co.country)) over ()) * 100), '%') percent_total
+          	concat(((count(co.country) / sum(count(co.country)) over ()) * 100), '%') percent_total
           FROM sakila.address a
             INNER JOIN sakila.city ct ON a.city_id = ct.city_id
             INNER JOIN sakila.country co ON ct.country_id = co.country_id
