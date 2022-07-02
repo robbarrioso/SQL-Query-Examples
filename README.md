@@ -7,19 +7,19 @@ Analysis using data windows, basic clause, sub-queries, joins, and others.
 
 PERCENT TOTAL OF OVERALL SALES BY COUNTRY 
 
-          SELECT B.country, B.tot_per_country, B.percent_total
-          FROM 
-          (
-          SELECT co.country, count(co.country) tot_per_country, 
-	   	sum(count(co.country)) over () tot_overall_countries, 
-          	concat(((count(co.country) / sum(count(co.country)) over ()) * 100), '%') percent_total
-          FROM sakila.address a
-            INNER JOIN sakila.city ct ON a.city_id = ct.city_id
-            INNER JOIN sakila.country co ON ct.country_id = co.country_id
-          GROUP BY co.country
-          ) B
-          HAVING B.tot_per_country > 1 #must have more than 1 sale per country
-          ORDER BY B.tot_per_country desc
+		  SELECT B.country, B.tot_per_country, B.percent_total
+		  FROM 
+		  (
+		  SELECT co.country, count(co.country) tot_per_country, 
+			sum(count(co.country)) over () tot_overall_countries, 
+			concat(((count(co.country) / sum(count(co.country)) over ()) * 100), '%') percent_total
+		  FROM sakila.address a
+		    INNER JOIN sakila.city ct ON a.city_id = ct.city_id
+		    INNER JOIN sakila.country co ON ct.country_id = co.country_id
+		  GROUP BY co.country
+		  ) B
+		  HAVING B.tot_per_country > 1 #must have more than 1 sale per country
+		  ORDER BY B.tot_per_country desc
           
 	  
  ![percent_total_sales_by_country](https://user-images.githubusercontent.com/67971912/176245207-b61a6d48-fb7b-4cf3-8c2d-8b1908ed9c77.png)
