@@ -54,7 +54,7 @@ WHICH COUNTRIES HAVE THE HIGHEST RANKING BY NUMBER OF RENTALS AND FILM TITLE? (C
 
 			SELECT B.title, B.country, B.max_by_country num_rentals_by_country , B.tot_num_by_title num_rentals_by_film, 
 				CONCAT(ROUND(((B.max_by_country / B.tot_num_by_title) * 100), 2), ' ', '%') percent_of_total_rentals
-                        FROM 
+                       FROM 
                         (
                         SELECT A.title , A.country, A.max_by_country, A.tot_num_by_title,
                                 row_number() over (partition by A.title order by A.max_by_country desc) row_number_rank
@@ -84,7 +84,7 @@ WHICH COUNTRIES HAVE THE HIGHEST RANKING BY NUMBER OF RENTALS AND FILM TITLE? (C
                          ) A
                          ORDER BY  A.title
                          )B
-                         WHERE B.row_number_rank = 1
+                        WHERE B.row_number_rank = 1
 
 		    
 		    
