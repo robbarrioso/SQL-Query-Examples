@@ -52,7 +52,7 @@ SHOWS ACTOR/ACTRESS full name ALONG WITH THE CATEGORY OF FILM WHICH HAS THE MAX 
 
 WHICH COUNTRIES HAVE THE HIGHEST RANKING BY NUMBER OF RENTALS AND FILM TITLE? (COMMON TABLE EXPRESSION, SUB-		QUERIES, RANKINGS, DATA WINDOWS)
 
-SELECT B.title, B.country, B.max_by_country, B.tot_num_by_title
+SELECT B.title, B.country, B.max_by_country num_rentals_by_country , B.tot_num_by_title num_rentals_by_film, CONCAT(ROUND(((B.max_by_country / B.tot_num_by_title) * 100), 2), ' ', '%') percent_of_total_rentals
                         FROM 
                         (
                         SELECT A.title , A.country, A.max_by_country, A.tot_num_by_title,
@@ -61,7 +61,7 @@ SELECT B.title, B.country, B.max_by_country, B.tot_num_by_title
                                 row_number() over (partition by A.title order by A.max_by_country desc) row_number_rank
                         FROM (
                         
-                        WITH cust_adrs_rent_film AS (
+                       WITH cust_adrs_rent_film AS ( 								#CTE
                         SELECT customer_id, inventory_id, rental_id , c.first_name, c.last_name,
 								c.address_id, cy.city, ct.country, f.title, f.film_id
                         FROM sakila.rental
@@ -90,4 +90,5 @@ SELECT B.title, B.country, B.max_by_country, B.tot_num_by_title
 		    
 		    
 
-![film_ranking_by_country1](https://user-images.githubusercontent.com/67971912/176559428-0c268866-048c-40e7-8e3d-8d45702a1c2a.png)
+
+![film_ranking_by_country2](https://user-images.githubusercontent.com/67971912/177014781-6416711a-7d79-499e-8b2c-96ddb15eebf8.png)
