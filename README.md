@@ -91,3 +91,13 @@ WHICH COUNTRIES HAVE THE HIGHEST RANKING BY NUMBER OF RENTALS AND FILM TITLE? (C
 
 
 ![film_ranking_by_country2](https://user-images.githubusercontent.com/67971912/177014781-6416711a-7d79-499e-8b2c-96ddb15eebf8.png)
+
+
+
+EXTRACTING DATA FROM SQL SERVER INTO PYTHON USING PYODBC AND OPENQUERIES.
+
+![connectsql_pyodbc](https://user-images.githubusercontent.com/67971912/178789543-b1455dfd-752a-49cf-9561-e55d0c149d39.png)
+
+SQL QUERY CONNECTSQL 
+
+![connectsql_query](https://user-images.githubusercontent.com/67971912/178789635-b0770450-dd23-4679-aa27-9fcfe11b152c.png)
